@@ -19,11 +19,6 @@ function startServer(options) {
   const reqIP = options.reqIP || 'tcp://127.0.0.1';
   const reqPORT = options.reqPORT || 5559;
 
-  // Start the server
-  server.listen(port, () => {
-    console.log('\x1b[32m%s\x1b[0m', `Server started on port ${port}`);
-  });
-
   /* ---------- PUB/SUB ---------- */
 
   // Connect to ZeroMQ and subscribe to a topic
@@ -89,7 +84,7 @@ function startServer(options) {
 
   /* ---------- END of PUSH/PULL ---------- */
 
-  // Request
+  // ZeroMQ request
   const reqSock = zmq.socket('req');
   reqSock.connect(`${reqIP}:${reqPORT}`);
 
@@ -100,10 +95,10 @@ function startServer(options) {
     });
   });
 
-  // // Start the server
-  // server.listen(port, () => {
-  //   console.log('\x1b[32m%s\x1b[0m', `Server started on port ${port}`);
-  // });
+  // Start the server
+  server.listen(port, () => {
+    console.log('\x1b[32m%s\x1b[0m', `Server started on port ${port}`);
+  });
 }
 
 module.exports = {
