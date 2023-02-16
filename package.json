@@ -1,6 +1,6 @@
 {
   "name": "react-zeromq-socketio",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "ZeroMQ to React Native solution with SocketIO",
   "main": "index.js",
   "repository": "https://github.com/andresev/react-zeromq-socketio.git",
