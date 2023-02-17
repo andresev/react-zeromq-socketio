@@ -7,24 +7,49 @@ function startServer(options) {
   const server = http.createServer(app);
   const io = socketIO(server);
 
-  const port = options.port || 3001;
+  const port = options.port || 3005;
+  /* SUBSCRIBER Settings */
   const subIP = options.subIP || 'tcp://127.0.0.1';
   const subPORT = options.subPORT || 5555;
+  const subTOPIC = options.subTOPIC || 'topic';
+  const subEvenName = options.subEvenName || 'message';
+
+  /* PUBLISHER Settings */
   const pubIP = options.pubIP || 'tcp://127.0.0.1';
   const pubPORT = options.pubPORT || 5556;
+  const pubTOPIC = options.pubTOPIC || 'topic';
+  const pubEventName = options.pubEventName || 'message';
+
+  /* PULL Settings */
   const pullIP = options.pullIP || 'tcp://127.0.0.1';
-  const pullPORT = options.pullPORT || 5557;
+  const pullPORT = options.pullPORT || 6666;
+  const pullEventName = options.pullEventName || 'message';
+
+  /* PUSH Settings */
   const pushIP = options.pushIP || 'tcp://127.0.0.1';
-  const pushPORT = options.pushPORT || 5558;
+  const pushPORT = options.pushPORT || 6667;
+  const pushEventName = options.pushEventName || 'message';
+
+  /* REQUEST Settings */
   const reqIP = options.reqIP || 'tcp://127.0.0.1';
-  const reqPORT = options.reqPORT || 5559;
+  const reqPORT = options.reqPORT || 7777;
+  const reqEventName = options.reqEventName || 'message';
+
+  /* REPLY Settings */
+  const repIP = options.repIP || 'tcp://127.0.0.1';
+  const repPORT = options.repPORT || 7778;
+  const repEventName = options.repEventName || 'message';
+  const repCODE = options.repCODE || 'Hello';
+  const repREPLY = options.repREPLY || 'World';
 
   /* ---------- PUB/SUB ---------- */
+
+  /* Note: removing .subcribe(""), you need to remove 'topic' from parameter */
 
   // Connect to ZeroMQ and subscribe to a topic
   const subSock = zmq.socket('sub');
   subSock.connect(`${subIP}:${subPORT}`);
-  subSock.subscribe('');
+  subSock.subscribe(`${subTOPIC}`);
   console.log(
     '\x1b[32m%s\x1b[0m',
     `Server Subscriber connected on port ${subPORT}`
@@ -45,9 +70,10 @@ function startServer(options) {
 
   // Listen for messages from React Native SocketIO and send to Subscriber
   io.on('connection', (socket) => {
-    socket.on('message', (message) => {
-      console.log('message received', message);
-      pubSock.send(['', message]);
+    console.log('\x1b[32m%s\x1b[0m', 'Connected to device');
+    socket.on('publish', (data) => {
+      console.log('message received', data);
+      pubSock.send([`${pubTOPIC}`, data]);
     });
   });
 
