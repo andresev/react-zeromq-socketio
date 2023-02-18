@@ -1,4 +1,4 @@
-function startServer(options) {
+function StartServer(options) {
   const express = require('express');
   const http = require('http');
   const zmq = require('zeromq');
@@ -7,12 +7,14 @@ function startServer(options) {
   const server = http.createServer(app);
   const io = socketIO(server);
 
+  // SocketIO port
   const port = options.port || 3005;
+
   /* SUBSCRIBER Settings */
   const subIP = options.subIP || 'tcp://127.0.0.1';
   const subPORT = options.subPORT || 5555;
   const subTOPIC = options.subTOPIC || 'topic';
-  const subEvenName = options.subEvenName || 'message';
+  const subEventName = options.subEventName || 'message';
 
   /* PUBLISHER Settings */
   const pubIP = options.pubIP || 'tcp://127.0.0.1';
@@ -39,12 +41,15 @@ function startServer(options) {
   const repIP = options.repIP || 'tcp://127.0.0.1';
   const repPORT = options.repPORT || 7778;
   const repEventName = options.repEventName || 'message';
-  const repCODE = options.repCODE || 'Hello';
+  const repREQUEST = options.repCODE || 'Hello';
   const repREPLY = options.repREPLY || 'World';
 
   /* ---------- PUB/SUB ---------- */
 
-  /* Note: removing .subcribe(""), you need to remove 'topic' from parameter */
+  /* Note: removing .subcribe(""), you need to remove 'topic' from parameter 
+    INSTEAD, just add simple topic rather than no topic. 
+    Default: 'topic' for subscriber and publisher
+  */
 
   // Connect to ZeroMQ and subscribe to a topic
   const subSock = zmq.socket('sub');
@@ -64,20 +69,17 @@ function startServer(options) {
   );
 
   // Listen for incoming messages from ZeroMQ and emit them over Socket.io
-  subSock.on('message', (data) => {
-    io.emit('message', data.toString());
+  subSock.on('message', (topic, data) => {
+    io.emit(`${subEventName}`, data.toString());
   });
 
   // Listen for messages from React Native SocketIO and send to Subscriber
   io.on('connection', (socket) => {
-    console.log('\x1b[32m%s\x1b[0m', 'Connected to device');
-    socket.on('publish', (data) => {
+    socket.on(`${pubEventName}`, (data) => {
       console.log('message received', data);
       pubSock.send([`${pubTOPIC}`, data]);
     });
   });
-
-  /* ---------- END of PUB/SUB ---------- */
 
   /* ---------- REQ/REP ---------- */
 
@@ -97,28 +99,52 @@ function startServer(options) {
     `Server Producer connected to port ${pushPORT}`
   );
 
+  // Listens for PUSH and PULLS data to emit to device (SocketIO)
   pullSock.on('message', (data) => {
-    io.emit('worker', data.toString());
+    io.emit(`${pullEventName}`, data.toString());
   });
 
   io.on('connection', (socket) => {
-    socket.on('message', (data) => {
-      console.log(data);
+    socket.on(`${pushEventName}`, (data) => {
       pushSock.send(data);
     });
   });
 
-  /* ---------- END of PUSH/PULL ---------- */
+  /* ---------- REQUEST/REPLY ---------- */
 
-  // ZeroMQ request
+  // ZeroMQ Request
   const reqSock = zmq.socket('req');
   reqSock.connect(`${reqIP}:${reqPORT}`);
+  console.log(
+    '\x1b[32m%s\x1b[0m',
+    `Server Request connected to port ${reqPORT}`
+  );
 
+  // ZeroMQ Reply
+  const repSock = zmq.socket('rep');
+  repSock.bind(`${repIP}:${repPORT}`);
+  console.log('\x1b[32m%s\x1b[0m', `Server Reply connected to port ${repPORT}`);
+
+  // Listening for REQ and sends back REP
+  repSock.on('message', (data) => {
+    console.log(`REP received request: ${data.toString()}`);
+    console.log('REP sending response');
+    switch (data.toString()) {
+      case repREQUEST:
+        repSock.send(repREPLY);
+    }
+  });
+
+  // REQ from App(SocketIO) and send to REP
   io.on('connection', (socket) => {
-    socket.on('message', (data) => {
-      console.log(data);
-      reqSock.send(data.toLowerCase());
+    socket.on(`${reqEventName}`, (data) => {
+      reqSock.send(data);
     });
+  });
+
+  // Receives reply from REP
+  reqSock.on('message', (reply) => {
+    console.log(reply.toString());
   });
 
   // Start the server
@@ -128,5 +154,5 @@ function startServer(options) {
 }
 
 module.exports = {
-  startServer,
+  StartServer,
 };

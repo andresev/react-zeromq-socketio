@@ -1,7 +1,7 @@
 {
   "name": "react-zeromq-socketio",
   "version": "1.0.6",
-  "description": "ZeroMQ to React Native solution with SocketIO",
+  "description": "ZeroMQ to React/ReactNative solution with SocketIO",
   "main": "index.js",
   "repository": "https://github.com/andresev/react-zeromq-socketio.git",
   "author": "Andues",
